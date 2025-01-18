@@ -1,22 +1,21 @@
 {
   "name": "@flit/publish-cdk-assets",
-  "version": "1.2.0",
+  "version": "1.3.0",
   "description": "A tool to publish CDK assets to S3 from manifest.json",
   "keywords": [
     "aws",
     "awscdk",
     "asset"
   ],
-  "homepage": "https://github.com/jumper-de/publish-cdk-assets",
-  "bugs": "https://github.com/jumper-de/publish-cdk-assets/issues",
+  "homepage": "https://github.com/vierroth/publish-cdk-assets",
+  "bugs": "https://github.com/vierroth/publish-cdk-assets/issues",
   "repository": {
     "type": "git",
-    "url": "https://github.com/jumper-de/publish-cdk-assets.git"
+    "url": "https://github.com/vierroth/publish-cdk-assets.git"
   },
   "license": "Apache-2.0",
   "author": {
     "name": "Luis Vierroth",
-    "email": "luis@jumper.de",
     "url": "https://github.com/p-mercury"
   },
   "main": "./dist/src/index.js",
@@ -32,27 +31,43 @@
     "build": "npm run prepack",
     "prepack": "rm -rf ./dist && tsc -b"
   },
+  "prettier": {
+    "plugins": [
+      "prettier-plugin-packagejson"
+    ],
+    "tabWidth": 2,
+    "overrides": [
+      {
+        "files": "*.sublime-project",
+        "options": {
+          "parser": "json"
+        }
+      }
+    ]
+  },
   "dependencies": {
-    "@aws-sdk/client-s3": "^3.609.0",
-    "@aws-sdk/client-sts": "^3.609.0",
-    "@aws-sdk/credential-providers": "^3.609.0",
-    "aws-cdk-lib": "^2.148.0",
+    "@aws-sdk/client-s3": "^3.731.1",
+    "@aws-sdk/client-sts": "^3.731.1",
+    "@aws-sdk/credential-providers": "^3.731.1",
+    "@aws-sdk/lib-storage": "^3.731.1",
+    "aws-cdk-lib": "^2.176.0",
     "yargs": "^17.7.2",
-    "zip-a-folder": "3.1.7"
+    "zip-a-folder": "3.1.8"
   },
   "devDependencies": {
-    "prettier": "^3.3.2",
-    "@types/archiver": "^6.0.2",
+    "@types/archiver": "^6.0.3",
     "@types/is-glob": "^4.0.4",
-    "@types/node": "^20.14.10",
-    "typescript": "^5.5.3"
+    "@types/node": "^22.10.7",
+    "prettier": "^3.4.2",
+    "prettier-plugin-packagejson": "^2.5.6",
+    "typescript": "^5.7.2"
   },
   "publishConfig": {
     "access": "public"
   },
+  "stability": "stable",
   "typedocOptions": {
     "entryPoints": "./src/index.ts",
     "readme": "./TYPEDOC.md"
-  },
-  "stability": "stable"
+  }
 }

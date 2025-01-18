@@ -4,6 +4,7 @@ import { fromTemporaryCredentials } from "@aws-sdk/credential-providers";
 import { zip } from "zip-a-folder";
 
 import { Asset } from "./interfaces";
+import { Upload } from "@aws-sdk/lib-storage";
 
 export async function publishAsset(
   key: string,
@@ -12,54 +13,64 @@ export async function publishAsset(
   account: string,
   region: string,
 ) {
-  if (asset.source.packaging === "zip") {
-    console.log(`Compressing ${key}`);
-    await zip(asset.source.path!, `${asset.source.path}.zip`);
-    asset.source.path = `${asset.source.path}.zip`;
-  }
-
   console.log(`Publishing ${key}`);
 
-  const promises: Promise<any>[] = [];
+  try {
+    if (asset.source.packaging === "zip") {
+      console.log(`Compressing ${key}`);
+      await zip(asset.source.path!, `${asset.source.path}.zip`);
+      asset.source.path = `${asset.source.path}.zip`;
+    }
 
-  for (var destinationKey in asset.destinations) {
-    const destination = asset.destinations[destinationKey];
+    console.log(`Uploading ${key}`);
 
-    const objectKey = destination.objectKey;
-    const bucketName = destination.bucketName
-      .replaceAll("${AWS::Partition}", partition)
-      .replaceAll("${AWS::Region}", destination.region || region)
-      .replaceAll("${AWS::AccountId}", account);
-    const assumeRoleArn = destination
-      .assumeRoleArn!.replaceAll("${AWS::Partition}", partition)
-      .replaceAll("${AWS::Region}", destination.region || region)
-      .replaceAll("${AWS::AccountId}", account);
+    const promises: Promise<any>[] = [];
 
-    const fileStream = fs.createReadStream(asset.source.path!);
+    for (var destinationKey in asset.destinations) {
+      const destination = asset.destinations[destinationKey];
+      const bucketName = destination.bucketName
+        .replaceAll("${AWS::Partition}", partition)
+        .replaceAll("${AWS::Region}", destination.region || region)
+        .replaceAll("${AWS::AccountId}", account);
+      const assumeRoleArn = destination
+        .assumeRoleArn!.replaceAll("${AWS::Partition}", partition)
+        .replaceAll("${AWS::Region}", destination.region || region)
+        .replaceAll("${AWS::AccountId}", account);
 
-    const credentials = fromTemporaryCredentials({
-      params: {
-        RoleArn: assumeRoleArn,
-        RoleSessionName: `upload-cdk-asset-${key}`.substring(0, 64),
-        DurationSeconds: 900,
-      },
-    });
+      const fileStream = fs.createReadStream(asset.source.path!);
 
-    promises.push(
-      new S3Client({
-        region: destination.region || region,
-        credentials: credentials,
-      }).send(
-        new PutObjectCommand({
-          Bucket: bucketName,
-          Key: objectKey,
-          Body: fileStream,
-        }),
-      ),
-    );
+      const credentials = fromTemporaryCredentials({
+        params: {
+          RoleArn: assumeRoleArn,
+          RoleSessionName: `upload-cdk-asset-${key}`.substring(0, 64),
+          DurationSeconds: 900,
+        },
+      });
+
+      promises.push(
+        new Upload({
+          client: new S3Client({
+            region: destination.region || region,
+            credentials: credentials,
+          }),
+          params: {
+            Bucket: bucketName,
+            Key: destination.objectKey,
+            Body: fileStream,
+          },
+          queueSize: 4,
+          leavePartsOnError: true,
+        }).done(),
+      );
+    }
+
+    await Promise.all(promises);
+
+    console.log(`Published ${key}`);
+  } catch (error) {
+    console.log(`Error publishing ${key}`);
+    throw error;
   }
-
-  await Promise.all(promises);
 }
 
 export async function publishAssets(

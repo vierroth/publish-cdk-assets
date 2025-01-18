@@ -24,8 +24,8 @@ require("yargs")
 
       await publishAssets(
         getNestedAssets(path.resolve(argv.path)),
-        partition!,
-        account!,
+        partition,
+        account,
         argv.region,
       );
     },
