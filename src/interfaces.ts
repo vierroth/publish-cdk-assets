@@ -1,10 +1,10 @@
 import { FileSource, FileDestination } from "aws-cdk-lib/cloud-assembly-schema";
 
 export interface Source extends FileSource {
-  path?: string;
+	path?: string;
 }
 
 export interface Asset {
-  source: Source;
-  destinations: { [id: string]: FileDestination };
+	source: Source;
+	destinations: FileDestination[];
 }
